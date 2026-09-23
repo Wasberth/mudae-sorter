@@ -220,7 +220,7 @@
     const safeImg = escapeHtml(c.image);
     return `
       <div class="card" data-char-id="${c.id}">
-        <img class="thumb" data-src="${safeImg}" alt="" loading="lazy">
+        <img class="thumb" data-src="${safeImg}" alt="" loading="lazy" referrerpolicy="no-referrer">
         <div class="char-data">
           <div class="char-name">${safeName}</div>
           <div class="ka">${c.value.toLocaleString()} ka</div>
