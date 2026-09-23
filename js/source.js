@@ -67,7 +67,7 @@
   }
 
   function parseCharacters(text) {
-    const entryRe = /(?:^|\s)(.+?)\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+ka\s*-\s*([\s\S]*?)(?=(?:\s+.+?\s+\*{0,2}[\d,]+\*{0,2}\s+ka\s*-)|$)/gi;
+    const entryRe = /(?:^|\s)(.+?)\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+ka\s*-\s*([\s\S]*?)(?=(?:\s+.+?\s+\*{0,2}[\d,\.\s]+\*{0,2}\s+ka\s*-)|$)/gi;
     const urlRe = /https:\/\/mudae\.net\/uploads\/[^\s)\]"']+/i;
     const found = [];
     let match;
