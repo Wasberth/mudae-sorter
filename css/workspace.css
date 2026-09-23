@@ -1,0 +1,168 @@
+/*
+ * =================================
+ * Layout
+ * =================================
+*/
+
+.workspace {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
+    height: 80vh;
+}
+
+.column {
+    height: 80vh;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1rem;
+    /* min-height: 500px; */
+    box-shadow: var(--shadow);
+    overflow: scroll;
+}
+
+.dropzone {
+    min-height: 3rem;
+    /* height: 100%; */
+    border: 1px dashed color-mix(in srgb, var(--border) 50%, transparent);
+    border-radius: 1rem;
+    padding: .25rem;
+    transition: border-color .15s, background .15s;
+    /* display: flex;
+    flex-wrap: wrap; */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: 1rem;
+}
+
+.dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(139, 124, 255, .08);
+}
+
+.bucket-zone:empty{
+    align-items: center;
+}
+.bucket-zone:empty::before{
+    content: "Drop your characters here!";
+    text-align: center;
+    vertical-align: middle;
+    display: inline-block;
+    line-height: normal;
+    color: var(--muted)
+}
+
+/*
+ * =================================
+ * Buckets
+ * =================================
+*/
+
+.bucket {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: .75rem;
+    margin-bottom: 1rem;
+    background: #171b22;
+}
+
+.bucket-title {
+    width: min(14rem, 70%);
+    font-weight: 700;
+}
+
+.bucket-handle {
+    cursor: grab;
+    color: var(--muted);
+    font-size: 18px;
+    padding: 0 0.25rem;
+}
+
+.bucket.dragging {
+    opacity: .5;
+}
+
+.bucket-count,
+.count {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.spacer { flex: 1; }
+
+/*
+ * =================================
+ * Draggables
+ * =================================
+*/
+
+.card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+    align-items: center;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    margin: auto;
+    cursor: grab;
+    user-select: none;
+    width: 5.8rem;
+    align-self: center;
+}
+
+/* .card {
+    width: minmax(min-content, 30%);
+}
+
+.bucket-zone > .card {
+    width: minmax(min-content, 16%);
+} */
+/* @media (width > 400px) {
+} */
+
+.card:active {
+    cursor: grabbing;
+}
+
+.card.dragging {
+    opacity: .45;
+}
+
+.thumb {
+    width: 5.12rem;
+    height: 8rem;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 7px;
+    background: #0e1117;
+    margin: auto;
+}
+
+.char-name {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    height: 3rem;
+}
+
+.ka {
+    color: #ffd46d;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 22px 10px;
+}

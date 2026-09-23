@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mudae Harem Sorter</title>
+    <link rel="stylesheet" href="css/body.css">
+    <link rel="stylesheet" href="css/ui_elements.css">
+    <link rel="stylesheet" href="css/workspace.css">
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <div>
+                <h1>Mudae Harem Sorter</h1>
+                <div class="subtitle">Use command <code>$mmmskvii-</code> and paste the Mudae character output in here.
+                    Drag characters into buckets, sort each bucket independently, then generate
+                    <code>$sm</code>/<code>$smp</code> commands.</div>
+            </div>
+            <div class="header-actions">
+                <button id="saveBtn" class="primary">Save</button>
+                <button id="clearAll" class="danger">Clear all</button>
+            </div>
+        </header>
+
+        <section class="panel">
+            <div class="column-header">
+                <h2>Import characters</h2>
+            </div>
+            <textarea id="sourceText" placeholder='Example:
+Rem 1100 ka - https://mudae.net/uploads/...
+Megumin 1000 ka - https://mudae.net/uploads/...'></textarea>
+            <div class="toolbar">
+                <button id="parseBtn" class="primary">Add characters</button>
+                <button id="sampleBtn">Load example</button>
+                <span class="muted">Duplicates by name are ignored.</span>
+            </div>
+            <div id="parseStatus" class="status"></div>
+        </section>
+
+        <main class="workspace">
+            <section class="column">
+                <div class="column-header">
+                    <h2>Unsorted <span id="unsortedCount" class="count"></span></h2>
+                    <select id="unsortedSort">
+                        <option value="">Sort…</option>
+                        <option value="ka-desc">Kakera ↓</option>
+                        <option value="ka-asc">Kakera ↑</option>
+                        <option value="name-asc">Name A → Z</option>
+                        <option value="name-desc">Name Z → A</option>
+                        <option value="random">Random</option>
+                    </select>
+                </div>
+                <div id="unsorted" class="dropzone" data-container="unsorted"></div>
+            </section>
+
+            <section class="column">
+                <div class="column-header">
+                    <h2>Sorted buckets <span id="sortedCount" class="count"></span></h2>
+                    <button id="addBucket">+ Add bucket</button>
+                </div>
+                <div id="buckets"></div>
+            </section>
+        </main>
+
+        <section class="panel">
+            <div class="column-header">
+                <h2>Discord command</h2>
+            </div>
+            <div class="toolbar">
+                <label class="check"><input id="splitCommands" type="checkbox" checked> Split commands above Discord's
+                    2000-character message limit</label>
+                <label class="check">Limit <input id="charLimit" type="number" min="100" value="2000"
+                        style="width:90px"></label>
+                <button id="generateBtn" class="primary">Generate</button>
+            </div>
+            <div class="output-grid">
+                <textarea id="commandOutput" readonly placeholder="Generated command(s) will appear here."></textarea>
+                <button id="copyBtn">Copy</button>
+            </div>
+            <div class="footer-note">
+                Final order = bucket order from top to bottom, then character order inside each bucket. Unsorted
+                characters are not included.
+                When split, command 1 starts with <code>$sm</code>; later commands start with
+                <code>$smp &lt;last character from previous command&gt;</code>.
+            </div>
+        </section>
+    </div>
+
+    <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
+    <script src="js/source.js"></script>
+</body>
+
+</html>
