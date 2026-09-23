@@ -453,13 +453,6 @@
 
   el('parseBtn').addEventListener('click', () => addParsed(sourceText.value));
 
-  el('sampleBtn').addEventListener('click', () => {
-    sourceText.value = `Rem 4,787 ka - https://mudae.net/uploads/4190198/bZZfHPc~bFtvJih.png
-Aqua 3,489 ka - https://mudae.net/uploads/2270731/OqRh0YC~aWN1eKU.png
-Misa Amane 1,921 ka - https://mudae.net/uploads/2919117/9K2S2K3~Bu3kKxP.png
-Raven 1,604 ka - https://mudae.net/uploads/7463187/Y1T01hX~zIbWemT3l.png`;
-  });
-
   el('addBucket').addEventListener('click', () => makeBucket(`Bucket ${state.buckets.length + 1}`));
 
   el('unsortedSort').addEventListener('change', e => {
