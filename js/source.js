@@ -73,18 +73,20 @@
   }
 
   function parseCharacters(text) {
-    const entryRe = /(?:^|\s)(.+?)\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+ka\s*-\s*([\s\S]*?)(?=(?:\s+.+?\s+\*{0,2}[\d,\.\s]+\*{0,2}\s+ka\s*-)|$)/gi;
-    const urlRe = /https:\/\/mudae\.net\/uploads\/[^\s)\]"']+/i;
+    const entryRe = /^\s*(.+?)(?:\s+\·\s+<?\:\w+key\:\d*\>?\s*\(\*{0,2}(\d[\d,\.\s]*)\*{0,2}\))?(?:\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+ka)?(?:\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+sp)?\s*-\s*<?(.*?.png)>?\s*$/gim;
+    // const urlRe = /https:\/\/mudae\.net\/uploads\/[^\s)\]"']+/i;
     const found = [];
     let match;
 
     while ((match = entryRe.exec(text)) !== null) {
       const name = match[1].trim().replace(/^[)\]"]+/, '').trim();
-      const value = Number(match[2].replace(/[,\.\s]/g, ''));
-      const urlMatch = match[3].match(urlRe);
+      const keys = Number(match[2]?.replace(/[,\.\s]/g, '')) || 0;
+      const value = Number(match[3]?.replace(/[,\.\s]/g, '')) || 0;
+      const sp = Number(match[4]?.replace(/[,\.\s]/g, '')) || 0;
+      const urlMatch = match[5];
 
       if (!name || !Number.isFinite(value) || !urlMatch) continue;
-      found.push({ id: uid(), name, value, image: normalizeUrl(urlMatch[0]) });
+      found.push({ id: uid(), name, keys, value, sp, image: normalizeUrl(urlMatch) });
     }
 
     return found;
@@ -227,16 +229,13 @@
     const safeImg = escapeHtml(c.image);
     return `
       <div class="card" data-char-id="${c.id}">
-        <img class="thumb" data-src="${safeImg}" alt="" loading="lazy" referrerpolicy="no-referrer">
         <div class="char-data">
           <div class="char-name">${safeName}</div>
-          <div class="ka">${c.value.toLocaleString()} ka</div>
+          <div class="keys">${c?.keys?.toLocaleString() || 0} 🗝️</div>
+          <div class="ka">${c?.value?.toLocaleString() || 0} 𖢻</div>
+          <div class="sp">${c?.sp?.toLocaleString() || 0} 🔴</div>
         </div>
-        <!--
-        <div class="card-actions">
-          <button class="small move-unsorted" title="Move back to unsorted">↩</button>
-        </div>
-        -->
+        <img class="thumb" data-src="${safeImg}" alt="" loading="lazy" referrerpolicy="no-referrer" />
       </div>`;
   }
 
@@ -299,6 +298,9 @@
         group: 'characters',
         animation: 150,
         draggable: '.card',
+        multiDrag: true, // Enable multi-drag
+        selectedClass: 'card-selected', // The class applied to the selected items
+        fallbackTolerance: 3, // So that we can select items on mobile
         onEnd: () => {
           syncStateFromDOM();
           renderCounts();
@@ -314,6 +316,9 @@
           group: 'characters',
           animation: 150,
           draggable: '.card',
+          multiDrag: true, // Enable multi-drag
+          selectedClass: 'card-selected', // The class applied to the selected items
+          fallbackTolerance: 3, // So that we can select items on mobile
           onEnd: () => {
             syncStateFromDOM();
             renderCounts();

@@ -121,6 +121,11 @@
     align-self: center;
 }
 
+.card-selected {
+    background: var(--selected);
+    border-color: var(--selected2);
+}
+
 /* .card {
     width: minmax(min-content, 30%);
 }
@@ -149,16 +154,33 @@
     margin: auto;
 }
 
+/* .char-data {
+    max-height: 6rem;
+} */
+
 .char-name {
     font-weight: 700;
-    overflow-wrap: anywhere;
-    height: 3rem;
+    overflow-wrap: break-word;
+    min-height: 3rem;
+    max-width: 5.7rem;
+}
+
+.keys {
+    color: #9644af;
+    overflow-wrap: break-word;
+    font-weight: 700;
 }
 
 .ka {
-    color: #ffd46d;
+    color: #6d9bff;
+    overflow-wrap: break-word;
     font-weight: 700;
-    white-space: nowrap;
+}
+
+.sp {
+    color: #d32727;
+    overflow-wrap: break-word;
+    font-weight: 700;
 }
 
 .card-actions {
