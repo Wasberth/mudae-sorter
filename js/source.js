@@ -16,8 +16,14 @@
 
   function saveState(manual = false) {
     syncStateFromDOM();
+
+    let used = state.unsorted.slice()
+    state.buckets.forEach(bucket => {
+      used = used.concat(bucket.chars)
+    })
+
     const savedState = {
-      characters: [...state.characters.values()],
+      characters: [...state.characters.values()].filter(c => used.includes(c.id)),
       unsorted: state.unsorted,
       buckets: state.buckets
     };
