@@ -14,13 +14,40 @@
   const unsortedEl = el('unsorted');
   const bucketsEl = el('buckets');
 
+  const commmandEl = el('mudae-command');
+  const defaultCommand = '$mmsii-';
+  const flags = {
+    keys: {
+      flag: 'y+',
+      active: true
+    },
+    kakera: {
+      flag: 'k',
+      active: true
+    },
+    spheres: {
+      flag: 'z+',
+      active: true
+    },
+    embed_color: {
+      flag: 'c+',
+      active: true
+    },
+    default: {
+      flag: 'm',
+      active: true
+    }
+  }
+
+  const defaultEmbedColor = '670d08';
+
   function saveState(manual = false) {
     syncStateFromDOM();
 
-    let used = state.unsorted.slice()
+    let used = state.unsorted.slice();
     state.buckets.forEach(bucket => {
-      used = used.concat(bucket.chars)
-    })
+      used = used.concat(bucket.chars);
+    });
 
     const savedState = {
       characters: [...state.characters.values()].filter(c => used.includes(c.id)),
@@ -73,20 +100,25 @@
   }
 
   function parseCharacters(text) {
-    const entryRe = /^\s*(.+?)(?:\s+\·\s+<?\:\w+key\:\d*\>?\s*\(\*{0,2}(\d[\d,\.\s]*)\*{0,2}\))?(?:\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+ka)?(?:\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+sp)?\s*-\s*<?(.*?.png)>?\s*$/gim;
+    const entryRe = /^\s*(.+?)(?:\s+\·\s+<?\:\w+key\:\d*\>?\s*\(\*{0,2}(\d[\d,\.\s]*)\*{0,2}\)\s*(?:\(\*{0,2}\#\*{0,2}([a-f\d]{6})\))?)?(?:\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+ka)?(?:\s+\*{0,2}(\d[\d,\.\s]+)\*{0,2}\s+sp)?\s*-\s*<?(http.*?\.(?:png|gif|jpeg|jpg|webp))>?\s*$/gim;
     // const urlRe = /https:\/\/mudae\.net\/uploads\/[^\s)\]"']+/i;
     const found = [];
     let match;
 
     while ((match = entryRe.exec(text)) !== null) {
-      const name = match[1].trim().replace(/^[)\]"]+/, '').trim();
+      const identifier = match[1].trim().replace(/^[)\]"]+/, '').trim();
+      const parts = identifier.split('|');
+      const name = parts.slice(0, -1).join('|').trim() || identifier.trim();
+      const note = parts.length > 1 ? parts.at(-1).trim() : '';
+
       const keys = Number(match[2]?.replace(/[,\.\s]/g, '')) || 0;
-      const value = Number(match[3]?.replace(/[,\.\s]/g, '')) || 0;
-      const sp = Number(match[4]?.replace(/[,\.\s]/g, '')) || 0;
-      const urlMatch = match[5];
+      const embed_color = match[3] || defaultEmbedColor;
+      const value = Number(match[4]?.replace(/[,\.\s]/g, '')) || 0;
+      const sp = Number(match[5]?.replace(/[,\.\s]/g, '')) || 0;
+      const urlMatch = match[6];
 
       if (!name || !Number.isFinite(value) || !urlMatch) continue;
-      found.push({ id: uid(), name, keys, value, sp, image: normalizeUrl(urlMatch) });
+      found.push({ id: uid(), name, note, keys, embed_color, value, sp, image: normalizeUrl(urlMatch) });
     }
 
     return found;
@@ -124,6 +156,35 @@
       parseStatus.className = 'status good';
       parseStatus.textContent = `Found ${parsed.length}; added ${added}${duplicates ? `; updated ${duplicates}` : ''}.`;
     }
+  }
+
+  // const button_switches = document.querySelector('button[role="switch"]');
+  const button_switches = document.querySelectorAll('button[role="switch"]');
+
+  for (const button_switch of button_switches) {
+    button_switch.addEventListener('click', (e) => {
+      const target = e.target;
+      const state = target.getAttribute('aria-checked');
+      const isState = (state === 'true');
+
+      const selected_flag = target.id.slice(0, -7).replace('-', '_');
+      console.log(selected_flag)
+      console.log(flags)
+      console.log(flags[selected_flag])
+      flags[selected_flag]['active'] = !flags[selected_flag]['active'];
+
+      let newCommand = defaultCommand;
+      for (const flag_keys of Object.keys(flags)) {
+        const flag = flags[flag_keys];
+        if (!flag['active']) continue;
+
+        newCommand += flag['flag'];
+      }
+      console.log(newCommand)
+      commmandEl.value = newCommand;
+
+      target.setAttribute('aria-checked', isState ? false : true);
+    });
   }
 
   function getChar(id) {
@@ -226,11 +287,12 @@
 
   function cardHTML(c) {
     const safeName = escapeHtml(c.name);
+    const safeNote = escapeHtml(c.note || '');
     const safeImg = escapeHtml(c.image);
     return `
-      <div class="card" data-char-id="${c.id}">
+      <div class="card" data-char-id="${c.id}" style="border-left: 3px solid #${c?.embed_color || defaultEmbedColor};">
         <div class="char-data">
-          <div class="char-name">${safeName}</div>
+          <div class="char-name">${safeName}<span class="note">${safeNote}</span></div>
           <div class="keys">${c?.keys?.toLocaleString() || 0} 🗝️</div>
           <div class="ka">${c?.value?.toLocaleString() || 0} 𖢻</div>
           <div class="sp">${c?.sp?.toLocaleString() || 0} 🔴</div>
@@ -536,6 +598,19 @@
       await navigator.clipboard.writeText(text);
       el('copyBtn').textContent = 'Copied!';
       setTimeout(() => el('copyBtn').textContent = 'Copy', 1000);
+    } catch {
+      el('commandOutput').select();
+      document.execCommand('copy');
+    }
+  });
+
+  el('copyCmd').addEventListener('click', async () => {
+    const text = commmandEl.value;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      el('copyCmd').textContent = 'Copied!';
+      setTimeout(() => el('copyCmd').textContent = 'Copy', 1000);
     } catch {
       el('commandOutput').select();
       document.execCommand('copy');

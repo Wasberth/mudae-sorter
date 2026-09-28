@@ -73,3 +73,48 @@ label.check input {
 	min-height: 130px;
 	white-space: pre-wrap;
 }
+
+/*
+ * =================================
+ * Toggle switch
+ * https://www.erikkroes.nl/blog/accessible-html-toggle-button-switch/
+ * =================================
+*/
+
+/* Formatting */
+button[role="switch"] {
+	padding: 0;
+	height: 1.5rem;
+	border-radius: 1rem;
+	display: inline-block;
+}
+
+button[role="switch"] span {
+	color: white;
+	padding: 0.1rem;
+	pointer-events: none;
+	border-radius: 2rem;
+	display: inline-block;
+	width: 1.5rem;
+}
+
+button[role="switch"][aria-checked="false"] :last-child {
+	padding-left: .2em;
+}
+
+/* Background changing */
+button[role="switch"][aria-checked="true"] {
+	background-color: var(--accent);
+}
+
+button[role="switch"][aria-checked="false"] {
+	background-color: var(--panel2);
+}
+
+
+
+button[role="switch"][aria-checked="true"] :last-child,
+[role="switch"][aria-checked="false"] :first-child {
+	background: var(--accent2);
+	color: var(--accent2)
+}

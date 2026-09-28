@@ -15,9 +15,11 @@
         <header>
             <div>
                 <h1>Mudae Harem Sorter</h1>
-                <div class="subtitle">Use command <code>$mmmskvii-</code> and paste the Mudae character output in here.
+                <div class="subtitle">Use the command generated in settings and paste the Mudae character output in
+                    here.
                     Drag characters into buckets, sort each bucket independently, then generate
-                    <code>$sm</code>/<code>$smp</code> commands.</div>
+                    <code>$sm</code>/<code>$smp</code> commands.
+                </div>
             </div>
             <div class="header-actions">
                 <button id="saveBtn" class="primary">Save</button>
@@ -37,6 +39,46 @@ Megumin 1000 ka - https://mudae.net/uploads/...'></textarea>
                 <span class="muted">Duplicates by name are ignored.</span>
             </div>
             <div id="parseStatus" class="status"></div>
+        </section>
+
+        <section class="panel">
+            <div class="column-header">
+                <h2>Settings</h2>
+            </div>
+            <div class="toolbar">
+                <label for="keys-toggle">Display keys
+                    <button type="button" id="keys-toggle" role="switch" aria-checked="true">
+                        <span>on</span><span>off</span>
+                    </button>
+                </label>
+                <label for="kakera-toggle">Display kakera
+                    <button type="button" id="kakera-toggle" role="switch" aria-checked="true">
+                        <span>on</span><span>off</span>
+                    </button>
+                </label>
+                <label for="spheres-toggle">Display spheres
+                    <button type="button" id="spheres-toggle" role="switch" aria-checked="true">
+                        <span>on</span><span>off</span>
+                    </button>
+                </label>
+                <label for="embed-color-toggle">Display embed color
+                    <button type="button" id="embed-color-toggle" role="switch" aria-checked="true">
+                        <span>on</span><span>off</span>
+                    </button>
+                </label>
+                <label for="default-toggle">Display default names / images (customs can be cropped badly)
+                    <button type="button" id="default-toggle" role="switch" aria-checked="true">
+                        <span>on</span><span>off</span>
+                    </button>
+                </label>
+                <input id="mudae-command" class="command" value="$mmsii-y+kz+c+m" readonly>
+                <button id="copyCmd">Copy</button>
+            </div>
+            <div class="footer-note">
+                This only applies for the command for mudae, displays are currently not hidden.
+                Custom images might be cropped incorrectly if not the same aspect ratio, if you have characters by their
+                default name and then change alias another character will be generated instead!
+            </div>
         </section>
 
         <main class="workspace">

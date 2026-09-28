@@ -158,6 +158,14 @@
     max-height: 6rem;
 } */
 
+span.note {
+    color: var(--muted)
+}
+
+span.note:not(:empty)::before {
+    content: " | "
+}
+
 .char-name {
     font-weight: 700;
     overflow-wrap: break-word;
