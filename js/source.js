@@ -90,12 +90,12 @@
     return found;
   }
 
-  function hasName(name) {
+  function getIdByName(name) {
     const n = name.trim().toLocaleLowerCase();
     for (const c of state.characters.values()) {
-      if (c.name.trim().toLocaleLowerCase() === n) return true;
+      if (c.name.trim().toLocaleLowerCase() === n) return c.id;
     }
-    return false;
+    return undefined;
   }
 
   function addParsed(text) {
@@ -103,8 +103,9 @@
     let added = 0, duplicates = 0;
 
     for (const c of parsed) {
-      if (hasName(c.name)) {
+      if (existingId = getIdByName(c.name)) {
         duplicates++;
+        state.characters.set(existingId, c);
         continue;
       }
       state.characters.set(c.id, c);
@@ -119,7 +120,7 @@
       parseStatus.textContent = 'No valid entries found. Expected: Name **1,234** ka - image URL';
     } else {
       parseStatus.className = 'status good';
-      parseStatus.textContent = `Found ${parsed.length}; added ${added}${duplicates ? `; ignored ${duplicates} duplicate(s)` : ''}.`;
+      parseStatus.textContent = `Found ${parsed.length}; added ${added}${duplicates ? `; updated ${duplicates}` : ''}.`;
     }
   }
 
