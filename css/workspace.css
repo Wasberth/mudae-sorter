@@ -13,6 +13,12 @@
     height: 80vh;
 }
 
+@media screen and (max-width: 600px) {
+  .workspace {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .column {
     height: 80vh;
     background: var(--panel);
@@ -34,7 +40,7 @@
     /* display: flex;
     flex-wrap: wrap; */
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(6.3rem, 1fr));
     gap: 1rem;
 }
 
@@ -111,7 +117,7 @@
     margin: auto;
     cursor: grab;
     user-select: none;
-    width: 5.8rem;
+    width: 6.3rem;
     align-self: center;
 }
 
