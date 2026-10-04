@@ -1,10 +1,11 @@
 (() => {
-    const el = id => document.getElementById(id);
-    const deleteDiv = el('delete-characters');
+    const actionButtons = document.querySelectorAll('.action-button');
 
-    ['pointerup', 'mouseup', 'touchend'].forEach(eventName => {
-        deleteDiv.addEventListener(eventName, evt => {
-            evt.stopPropagation();
+    actionButtons.forEach(actionButton => {
+        ['pointerup', 'mouseup', 'touchend'].forEach(eventName => {
+            actionButton.addEventListener(eventName, evt => {
+                evt.stopPropagation();
+            });
         });
     });
 })();

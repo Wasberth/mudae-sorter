@@ -92,10 +92,14 @@
 
 .action-button::before {
     content: "🗑️";
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 30px;
+}
+
+.divorce-button::before {
+    content: "💔";
+}
+
+.note-button::before {
+    content: "📝";
 }
 
 .action-button * {
@@ -109,6 +113,11 @@
   background-color: #251212;
   border-color: #a40f00;
 }
+
+/* .divorce-button.action-started:not(:empty) {
+  border-color: #8b7cff;
+  background-color: #201d35;
+} */
 
 .action-button>.card{
     display: none !important;

@@ -7,7 +7,8 @@
   const state = {
     characters: new Map(),
     unsorted: [],
-    buckets: []
+    buckets: [],
+    otherCommands: []
   };
 
   const storageKey = 'mudae-harem-sorter-state';
@@ -18,9 +19,15 @@
   const parseStatus = el('parseStatus');
   const unsortedEl = el('unsorted');
   const bucketsEl = el('buckets');
+  const actionWrapper = el('actions-wrapper');
   const deleteButton = el('delete-characters');
+  const divorceButton = el('divorce-characters');
+  const noteButton = el('note-characters');
+  const noteDialog = el('noteDialog');
+  let pendingNoteIds = [];
+  let commandNoticeTimeout;
 
-  const commmandEl = el('mudae-command');
+  const mudaeCommandEl = el('mudae-command');
   const defaultCommand = '$mmsii-';
   const flags = {
     keys: {
@@ -62,9 +69,11 @@
     const savedState = {
       characters: [...state.characters.values()].filter(c => used.includes(c.id)),
       unsorted: state.unsorted,
-      buckets: state.buckets
+      buckets: state.buckets,
+      otherCommands: state.otherCommands
     };
 
+    updateGeneratedCommands();
     try {
       localStorage.setItem(storageKey, JSON.stringify(savedState));
       if (manual) {
@@ -91,6 +100,14 @@
         name: typeof bucket.name === 'string' ? bucket.name : 'Bucket',
         chars: (Array.isArray(bucket.chars) ? bucket.chars : []).filter(id => characterIds.has(id))
       }));
+      const savedOtherCommands = Array.isArray(savedState.otherCommands)
+        ? savedState.otherCommands
+        : savedState.divorceCommands;
+      state.otherCommands = Array.isArray(savedOtherCommands)
+        ? savedOtherCommands
+          .filter(command => command && typeof command.id === 'string' && typeof command.text === 'string')
+          .map(command => ({ id: command.id, text: command.text }))
+        : [];
       return true;
     } catch {
       localStorage.removeItem(storageKey);
@@ -181,18 +198,131 @@
     const idsToDelete = new Set(ids.filter(id => state.characters.has(id)));
     if (!idsToDelete.size) return;
 
-    console.log('Deleting')
-
     state.unsorted = state.unsorted.filter(id => !idsToDelete.has(id));
     state.buckets.forEach(bucket => {
       bucket.chars = bucket.chars.filter(id => !idsToDelete.has(id));
     });
     idsToDelete.forEach(id => state.characters.delete(id));
 
-    console.log('rendering')
-
     render();
     saveState();
+  }
+
+  function divorceCharacters(ids) {
+    const names = [...new Set(ids)]
+      .map(id => getChar(id)?.name)
+      .filter(Boolean);
+    if (!names.length) return;
+
+    const commands = splitSimpleCommands('$divorce', names, getMessageLimit());
+    if (!commands) {
+      alert('A character name is too long to fit in a Discord command with the current message limit.');
+      render();
+      return;
+    }
+
+    const generated = commands.map(text => ({ id: uid(), text }));
+    state.otherCommands.unshift(...generated);
+    deleteCharacters(ids);
+    renderOtherCommands();
+    showCommandNotice(generated[0].id, 'Divorce commands generated.');
+  }
+
+  function noteCharacters(ids, note) {
+    const characters = [...new Set(ids)]
+      .map(id => getChar(id))
+      .filter(Boolean);
+    if (!characters.length) return;
+
+    const commands = splitNoteCommands(characters.map(character => character.name), note, getMessageLimit());
+    if (!commands) {
+      alert('The note and at least one character name do not fit within the current Discord message limit.');
+      return;
+    }
+
+    characters.forEach(character => {
+      character.note = note;
+    });
+    const generated = commands.map(text => ({ id: uid(), text }));
+    state.otherCommands.unshift(...generated);
+    render();
+    renderOtherCommands();
+    saveState();
+    showCommandNotice(generated[0].id, 'Note command(s) generated.');
+  }
+
+  function openNoteDialog(ids) {
+    pendingNoteIds = [...new Set(ids)].filter(id => state.characters.has(id));
+    if (!pendingNoteIds.length) return;
+    render();
+    noteDialog.showModal();
+    el('noteText').value = '';
+    el('noteText').focus();
+  }
+
+  function submitNote() {
+    const note = el('noteText').value.replace(/[\r\n]+/g, ' ').trim();
+    if (!note) {
+      alert('Enter a note before generating the command.');
+      return;
+    }
+
+    const ids = pendingNoteIds;
+    pendingNoteIds = [];
+    noteDialog.close();
+    noteCharacters(ids, note);
+  }
+
+  function getMessageLimit() {
+    return Math.max(100, Number(el('charLimit').value) || 2000);
+  }
+
+  function splitSimpleCommands(prefix, names, limit) {
+    const commands = [];
+    let batch = [];
+
+    for (const name of names) {
+      const candidate = [...batch, name];
+      if (commandFor(prefix, candidate).length <= limit) {
+        batch = candidate;
+        continue;
+      }
+
+      if (!batch.length) return null;
+
+      commands.push(commandFor(prefix, batch));
+      batch = [name];
+
+      if (commandFor(prefix, batch).length > limit) return null;
+    }
+
+    if (batch.length) commands.push(commandFor(prefix, batch));
+    return commands;
+  }
+
+  function splitNoteCommands(names, note, limit) {
+    const commands = [];
+    let batch = [];
+    const format = batchNames => `$n ${batchNames.join(' $ ')} $ ${note}`;
+
+    for (const name of names) {
+      const candidate = [...batch, name];
+
+      if (format(candidate).length <= limit) {
+        batch = candidate;
+        continue;
+      }
+
+      if (!batch.length) return null;
+
+      commands.push(format(batch));
+      batch = [name];
+
+      if (format(batch).length > limit) return null;
+    }
+
+    if (batch.length) commands.push(format(batch));
+    return commands;
   }
 
   function getChar(id) {
@@ -212,9 +342,6 @@
       const isState = (state === 'true');
 
       const selected_flag = target.id.slice(0, -7).replace('-', '_');
-      console.log(selected_flag)
-      console.log(flags)
-      console.log(flags[selected_flag])
       flags[selected_flag]['active'] = !flags[selected_flag]['active'];
 
       let newCommand = defaultCommand;
@@ -224,8 +351,7 @@
 
         newCommand += flag['flag'];
       }
-      console.log(newCommand)
-      commmandEl.value = newCommand;
+      mudaeCommandEl.value = newCommand;
 
       target.setAttribute('aria-checked', isState ? false : true);
     });
@@ -370,12 +496,23 @@
   }
 
   function deleteActionCharacters() {
-    console.log('deleting action characters')
     document.querySelectorAll('.action-button').forEach(actionBtn => {
-      console.log('cleaning', actionBtn)
       actionBtn.innerHTML = '';
-    })
+    });
   }
+
+  // Wierd Firefox Behaviour
+  const observer = new MutationObserver(() => {
+      console.log('changes');
+      void deleteButton.offsetWidth;
+      void divorceButton.offsetWidth;
+      void noteButton.offsetWidth;
+  });
+
+  observer.observe(actionWrapper, {
+    childList: true,
+    subtree: true
+  })
 
   /**===========================
     * Sortables
@@ -468,9 +605,8 @@
       );
     });
 
-    // Init Character lists for all action buttons
-    sortableInstances.push(
-      new Sortable(deleteButton, {
+    function initActionZone(actionButton, onCharactersAdded) {
+      sortableInstances.push(new Sortable(actionButton, {
         group: 'characters',
         animation: 150,
         draggable: '.card',
@@ -478,14 +614,16 @@
         selectedClass: 'card-selected', // The class applied to the selected items
         fallbackTolerance: 3, // So that we can select items on mobile
         onAdd: () => {
-          const ids = getContainerIds(deleteButton);
-          console.log(ids);
+          const ids = getContainerIds(actionButton);
           removeActionInteractivity();
-          console.log('removed interactivity');
-          deleteCharacters(ids);
+          onCharactersAdded(ids);
         },
-      })
-    );
+      }));
+    }
+
+    initActionZone(deleteButton, deleteCharacters);
+    initActionZone(divorceButton, divorceCharacters);
+    initActionZone(noteButton, openNoteDialog);
 
     /**=============================
      * Init Bucket Container sorting (Reordering buckets relative to each other)
@@ -564,6 +702,7 @@
 
     imageLoader.resetDetachedQueue();
     imageLoader.observe(document);
+    updateGeneratedCommands();
   }
 
   function moveBucket(id, delta) {
@@ -589,18 +728,14 @@
 
   function generateCommands() {
     const names = finalIds().map(id => getChar(id).name);
-    if (!names.length) {
-      el('commandOutput').value = '';
-      return;
-    }
+    if (!names.length) return [];
 
     const split = el('splitCommands').checked;
     const limit = Math.max(100, Number(el('charLimit').value) || 2000);
     const whole = commandFor('$sm', names);
 
     if (!split || whole.length <= limit) {
-      el('commandOutput').value = whole;
-      return;
+      return [whole];
     }
 
     const commands = [];
@@ -631,7 +766,60 @@
       previousLast = batch[batch.length - 1];
     }
 
-    el('commandOutput').value = commands.join('\n');
+    return commands;
+  }
+
+  function renderCommandTextareas(container, commands, { readOnly = false, dismissible = false } = {}) {
+    container.innerHTML = commands.map(command => `
+      <div class="command-item" id="${escapeHtml(command.itemId)}" data-command-id="${escapeHtml(command.id)}">
+        <textarea ${readOnly ? 'readonly' : ''} aria-label="Command">${escapeHtml(command.text)}</textarea>
+        <div class="command-actions">
+          <button type="button" data-copy-command>Copy</button>
+          ${dismissible ? '<button type="button" class="danger" data-dismiss-command>Dismiss</button>' : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateGeneratedCommands() {
+    renderCommandTextareas(el('commandOutput'), generateCommands().map((text, index) => ({
+      id: `generated-${index}`,
+      itemId: `generated-command-${index}`,
+      text
+    })), { readOnly: true });
+  }
+
+  function renderOtherCommands() {
+    renderCommandTextareas(el('otherCommandOutput'), state.otherCommands.map(command => ({
+      ...command,
+      itemId: `other-command-${command.id}`
+    })), { readOnly: true, dismissible: true });
+  }
+
+  function showCommandNotice(commandId, message) {
+    const notice = el('commandNotice');
+    notice.hidden = false;
+    notice.dataset.commandId = commandId;
+    el('commandNoticeText').textContent = message;
+    clearTimeout(commandNoticeTimeout);
+    commandNoticeTimeout = setTimeout(() => {
+      notice.hidden = true;
+    }, 10000);
+  }
+
+  async function copyCommand(button) {
+    const textarea = button.closest('.command-item').querySelector('textarea');
+    try {
+      await navigator.clipboard.writeText(textarea.value);
+    } catch {
+      textarea.select();
+      if (!document.execCommand('copy')) {
+        alert('Unable to copy this command in this browser.');
+        return;
+      }
+    }
+    button.textContent = 'Copied!';
+    setTimeout(() => button.textContent = 'Copy', 1000);
   }
 
   /**===========================
@@ -642,6 +830,9 @@
 
   el('addBucket').addEventListener('click', () => makeBucket(`Bucket ${state.buckets.length + 1}`));
 
+  el('splitCommands').addEventListener('change', updateGeneratedCommands);
+  el('charLimit').addEventListener('input', updateGeneratedCommands);
+
   el('unsortedSort').addEventListener('change', e => {
     if (!e.target.value) return;
     state.unsorted = sortIds(state.unsorted, e.target.value);
@@ -651,12 +842,39 @@
   });
 
   deleteButton.addEventListener('click', () => {
-    if (!confirm('Are you sure you want to delete all selected characters?')) return;
-    document.querySelectorAll('.card-selected').forEach(card => {
-      deleteCharacters(selectedCharacterIds(document));
-    });
+    const ids = selectedCharacterIds(document);
+    if (!ids.length || !confirm('Are you sure you want to delete all selected characters?')) return;
+    deleteCharacters(ids);
+  });
 
-  })
+  divorceButton.addEventListener('click', () => {
+    const ids = selectedCharacterIds(document);
+    if (!ids.length || !confirm('Are you sure you want to divorce all selected characters?')) return;
+    divorceCharacters(selectedCharacterIds(document));
+  });
+
+  noteButton.addEventListener('click', () => {
+    openNoteDialog(selectedCharacterIds(document));
+  });
+
+  noteDialog.addEventListener('close', () => {
+    if (pendingNoteIds.length) render();
+    pendingNoteIds = [];
+  });
+  el('noteForm').addEventListener('submit', event => {
+    event.preventDefault();
+    submitNote();
+  });
+  el('cancelNote').addEventListener('click', () => noteDialog.close());
+  el('noteText').addEventListener('input', event => {
+    const textarea = event.target;
+    const cursor = textarea.selectionStart;
+    const value = textarea.value.replace(/[\r\n]+/g, ' ');
+    if (value !== textarea.value) {
+      textarea.value = value;
+      textarea.setSelectionRange(Math.min(cursor, value.length), Math.min(cursor, value.length));
+    }
+  });
 
   bucketsEl.addEventListener('change', e => {
     if (e.target.matches('[data-bucket-name]')) {
@@ -710,32 +928,60 @@
   });
 
   el('saveBtn').addEventListener('click', () => saveState(true));
-  el('generateBtn').addEventListener('click', generateCommands);
+  document.addEventListener('click', event => {
+    const copyButton = event.target.closest('[data-copy-command]');
+    if (copyButton) {
+      copyCommand(copyButton);
+      return;
+    }
 
-  el('copyBtn').addEventListener('click', async () => {
-    const text = el('commandOutput').value;
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      el('copyBtn').textContent = 'Copied!';
-      setTimeout(() => el('copyBtn').textContent = 'Copy', 1000);
-    } catch {
-      el('commandOutput').select();
-      document.execCommand('copy');
+    const dismissButton = event.target.closest('[data-dismiss-command]');
+    if (dismissButton) {
+      const commandId = dismissButton.closest('.command-item').dataset.commandId;
+      state.otherCommands = state.otherCommands.filter(command => command.id !== commandId);
+      renderOtherCommands();
+      saveState();
+      return;
+    }
+
+    if (event.target.closest('#clearOtherCommands')) {
+      if (!state.otherCommands.length || !confirm('Clear all generated commands?')) return;
+      state.otherCommands = [];
+      renderOtherCommands();
+      saveState();
+      return;
+    }
+
+    if (event.target.closest('#takeMeToCommand')) {
+      const commandId = el('commandNotice').dataset.commandId;
+      const command = document.getElementById(`other-command-${commandId}`);
+      if (!command) return;
+      command.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      command.classList.add('command-highlight');
+      setTimeout(() => command.classList.remove('command-highlight'), 2000);
+      el('commandNotice').hidden = true;
+      clearTimeout(commandNoticeTimeout);
+    }
+
+    if (event.target.closest('#dismissCommandNotice')) {
+      el('commandNotice').hidden = true;
+      clearTimeout(commandNoticeTimeout);
     }
   });
 
-  el('copyCmd').addEventListener('click', async () => {
-    const text = commmandEl.value;
-    if (!text) return;
+  el('copyCmd').addEventListener('click', async event => {
+    if (!mudaeCommandEl.value) return;
     try {
-      await navigator.clipboard.writeText(text);
-      el('copyCmd').textContent = 'Copied!';
-      setTimeout(() => el('copyCmd').textContent = 'Copy', 1000);
+      await navigator.clipboard.writeText(mudaeCommandEl.value);
     } catch {
-      el('commandOutput').select();
-      document.execCommand('copy');
+      mudaeCommandEl.select();
+      if (!document.execCommand('copy')) {
+        alert('Unable to copy this command in this browser.');
+        return;
+      }
     }
+    event.target.textContent = 'Copied!';
+    setTimeout(() => event.target.textContent = 'Copy', 1000);
   });
 
   el('clearAll').addEventListener('click', () => {
@@ -743,14 +989,19 @@
     state.characters.clear();
     state.unsorted = [];
     state.buckets = [];
+    state.otherCommands = [];
     parseStatus.textContent = '';
-    el('commandOutput').value = '';
+    render();
+    renderOtherCommands();
     makeBucket('Keep');
     localStorage.removeItem(storageKey);
     sessionStorage.removeItem(storageKey);
   });
 
   if (!loadState()) makeBucket('Keep');
-  else render();
+  else {
+    render();
+    renderOtherCommands();
+  }
   setInterval(() => saveState(), autosaveIntervalMs);
 })();

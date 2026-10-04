@@ -17,8 +17,9 @@
                 <h1>Mudae Harem Sorter</h1>
                 <div class="subtitle">Use the command generated in settings and paste the Mudae character output in
                     here.
-                    Drag characters into buckets, sort each bucket independently, then generate
+                    Drag characters into buckets, sort each bucket independently, and automatically generate
                     <code>$sm</code>/<code>$smp</code> commands.
+                    Use the action targets to delete, divorce, or add notes to characters.
                 </div>
             </div>
             <div class="header-actions">
@@ -85,9 +86,15 @@ Megumin 1000 ka - https://mudae.net/uploads/...'></textarea>
             <div class="column-header">
                 <h2>Actions</h2>
             </div>
-            <div class="toolbar-centered">
+            <div id="actions-wrapper" class="toolbar-centered">
                 <button id="delete-characters" type="button" class="action-button delete-button"
                     aria-label="Delete selected characters" title="Delete selected characters"></button>
+                <button id="divorce-characters" type="button" class="action-button divorce-button"
+                    aria-label="Generate divorce command and delete selected characters"
+                    title="Generate divorce command and delete selected characters"></button>
+                <button id="note-characters" type="button" class="action-button note-button"
+                    aria-label="Add a note to selected characters"
+                    title="Add a note to selected characters"></button>
             </div>
         </section>
 
@@ -125,20 +132,42 @@ Megumin 1000 ka - https://mudae.net/uploads/...'></textarea>
                     2000-character message limit</label>
                 <label class="check">Limit <input id="charLimit" type="number" min="100" value="2000"
                         style="width:90px"></label>
-                <button id="generateBtn" class="primary">Generate</button>
             </div>
-            <div class="output-grid">
-                <textarea id="commandOutput" readonly placeholder="Generated command(s) will appear here."></textarea>
-                <button id="copyBtn">Copy</button>
-            </div>
+            <div id="commandOutput" class="command-list" aria-live="polite"></div>
             <div class="footer-note">
                 Final order = bucket order from top to bottom, then character order inside each bucket. Unsorted
-                characters are not included.
+                characters are not included. Commands update automatically as the sorted zones change.
                 When split, command 1 starts with <code>$sm</code>; later commands start with
                 <code>$smp &lt;last character from previous command&gt;</code>.
             </div>
         </section>
+
+        <section class="panel">
+            <div class="column-header">
+                <h2>Other commands</h2>
+                <button id="clearOtherCommands" class="danger">Clear all other commands</button>
+            </div>
+            <div id="otherCommandOutput" class="command-list" aria-live="polite"></div>
+        </section>
     </div>
+
+    <div id="commandNotice" class="command-notice" role="alert" hidden>
+        <span id="commandNoticeText"></span>
+        <button id="takeMeToCommand" type="button">Take me there</button>
+        <button id="dismissCommandNotice" type="button" aria-label="Dismiss notification">X</button>
+    </div>
+
+    <dialog id="noteDialog" class="note-dialog">
+        <form id="noteForm">
+            <h2>Note selected characters</h2>
+            <label for="noteText">Note (single line)</label>
+            <textarea id="noteText" rows="4" required placeholder="Enter the note to apply to these characters"></textarea>
+            <div class="dialog-actions">
+                <button id="cancelNote" type="button">Cancel</button>
+                <button type="submit" class="primary">Generate note command</button>
+            </div>
+        </form>
+    </dialog>
 
     <script src="js/event_canceler.js"></script>
     <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>

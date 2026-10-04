@@ -69,9 +69,101 @@ label.check input {
 	width: auto;
 }
 
-#commandOutput {
-	min-height: 130px;
+.command-list {
+	display: grid;
+	gap: .6rem;
+}
+
+.command-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: .5rem;
+	align-items: start;
+	padding: .25rem;
+	border: 1px solid transparent;
+	border-radius: 10px;
+	transition: border-color .2s, background-color .2s;
+}
+
+.command-item textarea {
+	min-height: 64px;
 	white-space: pre-wrap;
+}
+
+.command-actions {
+	display: flex;
+	gap: .5rem;
+}
+
+.command-highlight {
+	border-color: var(--accent);
+	background: rgba(139, 124, 255, .16);
+}
+
+.command-notice {
+	position: fixed;
+	right: 1rem;
+	bottom: 1rem;
+	z-index: 10;
+	display: flex;
+	gap: .75rem;
+	align-items: center;
+	padding: .75rem;
+	background: linear-gradient(120deg, #8428a8, #db2876, #e87824);
+	border: 1px solid #ffb5e8;
+	border-radius: 10px;
+	box-shadow: 0 0 24px rgba(236, 54, 164, .65);
+	animation: notice-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes notice-pulse {
+	from { filter: brightness(1); transform: scale(1); }
+	to { filter: brightness(1.25); transform: scale(1.025); }
+}
+
+.command-notice[hidden] {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.command-notice {
+		animation: none;
+	}
+}
+
+.note-dialog {
+	width: min(34rem, calc(100% - 2rem));
+	color: var(--text);
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-radius: 1rem;
+	box-shadow: 0 16px 48px rgba(0, 0, 0, .6);
+}
+
+.note-dialog::backdrop {
+	background: rgba(5, 7, 12, .75);
+	backdrop-filter: blur(3px);
+}
+
+.note-dialog form {
+	display: grid;
+	gap: .8rem;
+}
+
+.note-dialog textarea {
+	min-height: 5rem;
+}
+
+.dialog-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: .5rem;
+}
+
+@media screen and (max-width: 600px) {
+	.command-item {
+		grid-template-columns: 1fr;
+	}
 }
 
 /*
