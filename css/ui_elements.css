@@ -88,6 +88,7 @@ label.check input {
 .command-item textarea {
 	min-height: 64px;
 	white-space: pre-wrap;
+  	field-sizing: content;
 }
 
 .command-actions {

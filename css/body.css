@@ -61,6 +61,11 @@ header {
 	margin-bottom: 1rem;
 }
 
+.panel.sort-command{
+	height: 80vh;
+	overflow: scroll;
+}
+
 .toolbar {
 	display: flex;
 	flex-wrap: wrap;
