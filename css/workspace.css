@@ -164,6 +164,15 @@
     font-size: 12px;
 }
 
+.bucket-kakera {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.bucket-zone[hidden] {
+    display: none;
+}
+
 .spacer { flex: 1; }
 
 /*

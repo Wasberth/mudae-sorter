@@ -6,7 +6,8 @@ This is a open-source page to help you sort your mudae harem / collection in a v
 
 Import or update your harem with the command provided to include kakera value and image link.
 List of unsorted vs sorted characters to have visual progress indication
-Buckets to further help sort characters easier based on manual categories
+Buckets to further help sort characters easier based on manual categories, select all of a bucket for actions, collapse buckets, and view each bucket's total kakera
+Sort characters by kakera, keys, spheres, or name
 Discord command export for nitro and non-nitro users
 
 ## Bug reporting / Collaboration

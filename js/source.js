@@ -98,7 +98,8 @@
       state.buckets = savedState.buckets.map(bucket => ({
         id: bucket.id || uid(),
         name: typeof bucket.name === 'string' ? bucket.name : 'Bucket',
-        chars: (Array.isArray(bucket.chars) ? bucket.chars : []).filter(id => characterIds.has(id))
+        chars: (Array.isArray(bucket.chars) ? bucket.chars : []).filter(id => characterIds.has(id)),
+        collapsed: bucket.collapsed === true
       }));
       const savedOtherCommands = Array.isArray(savedState.otherCommands)
         ? savedState.otherCommands
@@ -192,6 +193,15 @@
     return Array.from(root.querySelectorAll('.card-selected'))
       .map(card => card.dataset.charId)
       .filter(Boolean);
+  }
+
+  function updateBucketSelectionButton(zone) {
+    const button = zone.closest('.bucket')?.querySelector('[data-select-bucket]');
+    if (!button) return;
+
+    const cards = Array.from(zone.querySelectorAll('.card'));
+    const allSelected = cards.length > 0 && cards.every(card => card.classList.contains('card-selected'));
+    button.textContent = allSelected ? 'Deselect all' : 'Select all';
   }
 
   function deleteCharacters(ids) {
@@ -513,6 +523,29 @@
     ============================*/
 
   let sortableInstances = [];
+  let bucketSelectionObserver;
+
+  function observeBucketSelections() {
+    if (bucketSelectionObserver) bucketSelectionObserver.disconnect();
+
+    bucketSelectionObserver = new MutationObserver(records => {
+      const changedZones = new Set();
+      records.forEach(record => {
+        const zone = record.target.closest('.bucket-zone');
+        if (zone) changedZones.add(zone);
+      });
+      changedZones.forEach(updateBucketSelectionButton);
+    });
+
+    document.querySelectorAll('.bucket-zone').forEach(zone => {
+      bucketSelectionObserver.observe(zone, {
+        attributes: true,
+        attributeFilter: ['class'],
+        childList: true,
+        subtree: true
+      });
+    });
+  }
 
   function sortIds(ids, mode) {
     const copy = [...ids];
@@ -520,6 +553,10 @@
 
     if (mode === 'ka-desc') copy.sort((a, b) => getChar(b).value - getChar(a).value || cmpName(a, b));
     if (mode === 'ka-asc') copy.sort((a, b) => getChar(a).value - getChar(b).value || cmpName(a, b));
+    if (mode === 'keys-desc') copy.sort((a, b) => getChar(b).keys - getChar(a).keys || cmpName(a, b));
+    if (mode === 'keys-asc') copy.sort((a, b) => getChar(a).keys - getChar(b).keys || cmpName(a, b));
+    if (mode === 'sp-desc') copy.sort((a, b) => getChar(b).sp - getChar(a).sp || cmpName(a, b));
+    if (mode === 'sp-asc') copy.sort((a, b) => getChar(a).sp - getChar(b).sp || cmpName(a, b));
     if (mode === 'name-asc') copy.sort(cmpName);
     if (mode === 'name-desc') copy.sort((a, b) => -cmpName(a, b));
     if (mode === 'random') {
@@ -586,6 +623,8 @@
           multiDrag: true, // Enable multi-drag
           selectedClass: 'card-selected', // The class applied to the selected items
           fallbackTolerance: 3, // So that we can select items on mobile
+          onSelect: () => updateBucketSelectionButton(zone),
+          onDeselect: () => updateBucketSelectionButton(zone),
           onStart: function () {
             addActionInteractivity();
           },
@@ -653,6 +692,11 @@
       if (countEl) {
         countEl.textContent = `${b.chars.length} character${b.chars.length === 1 ? '' : 's'}`;
       }
+      const kakeraEl = bucketsEl.querySelector(`.bucket[data-bucket-id="${b.id}"] .bucket-kakera`);
+      if (kakeraEl) {
+        const total = b.chars.reduce((sum, id) => sum + (Number(getChar(id)?.value) || 0), 0);
+        kakeraEl.textContent = `${total.toLocaleString()} kakera`;
+      }
     });
   }
 
@@ -671,24 +715,31 @@
           <span class="bucket-handle" title="Drag bucket">☰</span>
           <input class="bucket-title" data-bucket-name="${b.id}" value="${escapeHtml(b.name)}">
           <span class="bucket-count">${b.chars.length} character${b.chars.length === 1 ? '' : 's'}</span>
+          <span class="bucket-kakera">${b.chars.reduce((sum, id) => sum + (Number(getChar(id)?.value) || 0), 0).toLocaleString()} kakera</span>
           <span class="spacer"></span>
           <select class="bucket-sort" data-bucket-sort="${b.id}">
           <option value="">Sort…</option>
           <option value="ka-desc">Kakera ↓</option>
           <option value="ka-asc">Kakera ↑</option>
+          <option value="keys-desc">Keys ↓</option>
+          <option value="keys-asc">Keys ↑</option>
+          <option value="sp-desc">Spheres ↓</option>
+          <option value="sp-asc">Spheres ↑</option>
           <option value="name-asc">Name A → Z</option>
           <option value="name-desc">Name Z → A</option>
           <option value="random">Random</option>
           </select>
+          <button class="small bucket-select-all" data-select-bucket="${b.id}" type="button">Select all</button>
           <button class="small bucket-up" data-bucket-up="${b.id}" ${i === 0 ? 'disabled' : ''}>↑</button>
           <button class="small bucket-down" data-bucket-down="${b.id}" ${i === state.buckets.length - 1 ? 'disabled' : ''}>↓</button>
           <button class="small danger delete-bucket" data-delete-bucket="${b.id}">Delete</button>
-          <span class="bucket-collapse" title="Collapse">&lt;</span>
+          <button class="small bucket-collapse" data-toggle-bucket="${b.id}" type="button" aria-expanded="${!b.collapsed}" aria-label="${b.collapsed ? 'Expand' : 'Collapse'} bucket">${b.collapsed ? 'Expand' : 'Collapse'}</button>
         </div>
-        <div class="dropzone bucket-zone" data-container="bucket" data-bucket-id="${b.id}">${b.chars.map(id => cardHTML(getChar(id))).join('')}</div>
+        <div class="dropzone bucket-zone" data-container="bucket" data-bucket-id="${b.id}" ${b.collapsed ? 'hidden' : ''}>${b.chars.map(id => cardHTML(getChar(id))).join('')}</div>
       </div>
     `).join('');
 
+    observeBucketSelections();
     deleteActionCharacters();
 
     renderCounts();
@@ -885,11 +936,35 @@
   });
 
   bucketsEl.addEventListener('click', e => {
+    const selectAll = e.target.closest('[data-select-bucket]');
+    if (selectAll) {
+      const bucketEl = selectAll.closest('.bucket');
+      const zone = bucketEl?.querySelector('.bucket-zone');
+      if (!zone) return;
+
+      const cards = Array.from(zone.querySelectorAll('.card'));
+      const allSelected = cards.length > 0 && cards.every(card => card.classList.contains('card-selected'));
+      cards.forEach(card => {
+        if (allSelected) Sortable.utils.deselect(card);
+        else Sortable.utils.select(card);
+      });
+      updateBucketSelectionButton(zone);
+      return;
+    }
+    const toggle = e.target.closest('[data-toggle-bucket]');
+    if (toggle) {
+      const bucket = state.buckets.find(b => b.id === toggle.dataset.toggleBucket);
+      if (!bucket) return;
+      bucket.collapsed = !bucket.collapsed;
+      render();
+      saveState();
+      return;
+    }
     const del = e.target.closest('[data-delete-bucket]');
     if (del) {
       const id = del.dataset.deleteBucket;
       const i = state.buckets.findIndex(b => b.id === id);
-      if (i >= 0) {
+      if (i >= 0 && confirm(`Delete "${state.buckets[i].name}"? Its characters will be moved back to Unsorted.`)) {
         // Move all items from deleted bucket back into state.unsorted
         state.unsorted.push(...state.buckets[i].chars);
         state.buckets.splice(i, 1);
