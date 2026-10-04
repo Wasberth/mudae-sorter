@@ -262,11 +262,6 @@
 
   function submitNote() {
     const note = el('noteText').value.replace(/[\r\n]+/g, ' ').trim();
-    if (!note) {
-      alert('Enter a note before generating the command.');
-      return;
-    }
-
     const ids = pendingNoteIds;
     pendingNoteIds = [];
     noteDialog.close();
@@ -303,7 +298,7 @@
   function splitNoteCommands(names, note, limit) {
     const commands = [];
     let batch = [];
-    const format = batchNames => `$n ${batchNames.join(' $ ')} $ ${note}`;
+    const format = batchNames => `$n ${batchNames.join(' $ ')} $${note ? ` ${note}` : ''}`;
 
     for (const name of names) {
       const candidate = [...batch, name];

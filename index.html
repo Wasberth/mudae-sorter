@@ -145,7 +145,7 @@ Megumin 1000 ka - https://mudae.net/uploads/...'></textarea>
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel sort-command">
             <div class="column-header">
                 <h2>Other commands</h2>
                 <button id="clearOtherCommands" class="danger">Clear all other commands</button>
@@ -163,8 +163,8 @@ Megumin 1000 ka - https://mudae.net/uploads/...'></textarea>
     <dialog id="noteDialog" class="note-dialog">
         <form id="noteForm">
             <h2>Note selected characters</h2>
-            <label for="noteText">Note (single line)</label>
-            <textarea id="noteText" rows="4" required placeholder="Enter the note to apply to these characters"></textarea>
+            <label for="noteText">Note (single line; leave empty to clear existing notes)</label>
+            <textarea id="noteText" rows="4" placeholder="Enter a note, or leave empty to clear existing notes"></textarea>
             <div class="dialog-actions">
                 <button id="cancelNote" type="button">Cancel</button>
                 <button type="submit" class="primary">Generate note command</button>
