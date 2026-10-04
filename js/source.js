@@ -551,12 +551,12 @@
         const copy = [...ids];
         const cmpName = (a, b) => getChar(a).name.localeCompare(getChar(b).name, undefined, { sensitivity: 'base' });
 
-        if (mode === 'ka-desc') copy.sort((a, b) => getChar(b).value - getChar(a).value || cmpName(a, b));
-        if (mode === 'ka-asc') copy.sort((a, b) => getChar(a).value - getChar(b).value || cmpName(a, b));
-        if (mode === 'keys-desc') copy.sort((a, b) => getChar(b).keys - getChar(a).keys || cmpName(a, b));
-        if (mode === 'keys-asc') copy.sort((a, b) => getChar(a).keys - getChar(b).keys || cmpName(a, b));
-        if (mode === 'sp-desc') copy.sort((a, b) => getChar(b).sp - getChar(a).sp || cmpName(a, b));
-        if (mode === 'sp-asc') copy.sort((a, b) => getChar(a).sp - getChar(b).sp || cmpName(a, b));
+        if (mode === 'ka-desc') copy.sort((a, b)    => (getChar(b)?.value || 0) - (getChar(a)?.value || 0));
+        if (mode === 'ka-asc') copy.sort((a, b)     => (getChar(a)?.value || 0) - (getChar(b)?.value || 0));
+        if (mode === 'keys-desc') copy.sort((a, b)  => (getChar(b)?.keys  || 0) - (getChar(a)?.keys  || 0));
+        if (mode === 'keys-asc') copy.sort((a, b)   => (getChar(a)?.keys  || 0) - (getChar(b)?.keys  || 0));
+        if (mode === 'sp-desc') copy.sort((a, b)    => (getChar(b)?.sp    || 0) - (getChar(a)?.sp    || 0));
+        if (mode === 'sp-asc') copy.sort((a, b)     => (getChar(a)?.sp    || 0) - (getChar(b)?.sp    || 0));
         if (mode === 'name-asc') copy.sort(cmpName);
         if (mode === 'name-desc') copy.sort((a, b) => -cmpName(a, b));
         if (mode === 'random') {
