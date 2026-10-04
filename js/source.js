@@ -503,10 +503,9 @@
 
   // Wierd Firefox Behaviour
   const observer = new MutationObserver(() => {
-      console.log('changes');
-      void deleteButton.offsetWidth;
-      void divorceButton.offsetWidth;
-      void noteButton.offsetWidth;
+      actionWrapper.querySelectorAll('.action-button').forEach(actionBtn => {
+        actionBtn.classList.toggle('shaky', !actionBtn.matches(':empty'))
+      })
   });
 
   observer.observe(actionWrapper, {

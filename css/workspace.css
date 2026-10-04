@@ -88,6 +88,7 @@
     justify-content: center;
     align-items: center;
     font-size: 30px;
+    transition: border-color .2s, background-color .2s;
 }
 
 .action-button::before {
@@ -107,17 +108,21 @@
     visibility: hidden;
 }
 
-.action-button.action-started:not(:empty){
+.action-button.action-started.shaky{
   animation: shake 0.5s;
   animation-iteration-count: infinite;
-  background-color: #251212;
-  border-color: #a40f00;
+  background-color: color-mix(in srgb, initial, transparent);
 }
 
-/* .divorce-button.action-started:not(:empty) {
-  border-color: #8b7cff;
-  background-color: #201d35;
-} */
+.action-button.action-started.danger-action{
+    background-color: var(--danger-action-bg);
+    border-color: var(--danger-action-border);
+}
+
+.action-button.action-started.action{
+    background-color: var(--accent);
+    border-color: var(--accent2);
+}
 
 .action-button>.card{
     display: none !important;
