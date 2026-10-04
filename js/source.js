@@ -1,4 +1,9 @@
 (() => {
+
+  /**==========================
+   * CONSTANTS
+   ==========================*/
+
   const state = {
     characters: new Map(),
     unsorted: [],
@@ -13,6 +18,7 @@
   const parseStatus = el('parseStatus');
   const unsortedEl = el('unsorted');
   const bucketsEl = el('buckets');
+  const deleteButton = el('delete-characters');
 
   const commmandEl = el('mudae-command');
   const defaultCommand = '$mmsii-';
@@ -40,6 +46,10 @@
   }
 
   const defaultEmbedColor = '670d08';
+
+  /**===========================
+   * State manager
+   ============================*/
 
   function saveState(manual = false) {
     syncStateFromDOM();
@@ -88,7 +98,10 @@
     }
   }
 
-  let sortableInstances = [];
+
+  /**===========================
+   * Character functions
+   ============================*/
 
   const uid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 
@@ -158,7 +171,38 @@
     }
   }
 
-  // const button_switches = document.querySelector('button[role="switch"]');
+  function selectedCharacterIds(root) {
+    return Array.from(root.querySelectorAll('.card-selected'))
+      .map(card => card.dataset.charId)
+      .filter(Boolean);
+  }
+
+  function deleteCharacters(ids) {
+    const idsToDelete = new Set(ids.filter(id => state.characters.has(id)));
+    if (!idsToDelete.size) return;
+
+    console.log('Deleting')
+
+    state.unsorted = state.unsorted.filter(id => !idsToDelete.has(id));
+    state.buckets.forEach(bucket => {
+      bucket.chars = bucket.chars.filter(id => !idsToDelete.has(id));
+    });
+    idsToDelete.forEach(id => state.characters.delete(id));
+
+    console.log('rendering')
+
+    render();
+    saveState();
+  }
+
+  function getChar(id) {
+    return state.characters.get(id);
+  }
+
+  /**===========================
+    * Options
+    ============================*/
+
   const button_switches = document.querySelectorAll('button[role="switch"]');
 
   for (const button_switch of button_switches) {
@@ -185,10 +229,6 @@
 
       target.setAttribute('aria-checked', isState ? false : true);
     });
-  }
-
-  function getChar(id) {
-    return state.characters.get(id);
   }
 
   // Throttled image loader.
@@ -285,6 +325,10 @@
     }
   };
 
+  /**===========================
+    * HTML INTERACTIVITY
+    ============================*/
+
   function cardHTML(c) {
     const safeName = escapeHtml(c.name);
     const safeNote = escapeHtml(c.note || '');
@@ -312,6 +356,32 @@
     render();
     saveState();
   }
+
+  function addActionInteractivity() {
+    document.querySelectorAll('.action-button').forEach(actionBtn => {
+      actionBtn.classList.add('action-started');
+    })
+  }
+
+  function removeActionInteractivity() {
+    document.querySelectorAll('.action-button').forEach(actionBtn => {
+      actionBtn.classList.remove('action-started');
+    })
+  }
+
+  function deleteActionCharacters() {
+    console.log('deleting action characters')
+    document.querySelectorAll('.action-button').forEach(actionBtn => {
+      console.log('cleaning', actionBtn)
+      actionBtn.innerHTML = '';
+    })
+  }
+
+  /**===========================
+    * Sortables
+    ============================*/
+
+  let sortableInstances = [];
 
   function sortIds(ids, mode) {
     const copy = [...ids];
@@ -363,7 +433,11 @@
         multiDrag: true, // Enable multi-drag
         selectedClass: 'card-selected', // The class applied to the selected items
         fallbackTolerance: 3, // So that we can select items on mobile
+        onStart: function () {
+          addActionInteractivity();
+        },
         onEnd: () => {
+          removeActionInteractivity();
           syncStateFromDOM();
           renderCounts();
           saveState();
@@ -381,7 +455,11 @@
           multiDrag: true, // Enable multi-drag
           selectedClass: 'card-selected', // The class applied to the selected items
           fallbackTolerance: 3, // So that we can select items on mobile
+          onStart: function () {
+            addActionInteractivity();
+          },
           onEnd: () => {
+            removeActionInteractivity();
             syncStateFromDOM();
             renderCounts();
             saveState();
@@ -390,7 +468,28 @@
       );
     });
 
-    // Init Bucket Container sorting (Reordering buckets relative to each other)
+    // Init Character lists for all action buttons
+    sortableInstances.push(
+      new Sortable(deleteButton, {
+        group: 'characters',
+        animation: 150,
+        draggable: '.card',
+        multiDrag: true, // Enable multi-drag
+        selectedClass: 'card-selected', // The class applied to the selected items
+        fallbackTolerance: 3, // So that we can select items on mobile
+        onAdd: () => {
+          const ids = getContainerIds(deleteButton);
+          console.log(ids);
+          removeActionInteractivity();
+          console.log('removed interactivity');
+          deleteCharacters(ids);
+        },
+      })
+    );
+
+    /**=============================
+     * Init Bucket Container sorting (Reordering buckets relative to each other)
+     =============================*/
     sortableInstances.push(
       new Sortable(bucketsEl, {
         group: 'buckets',
@@ -425,6 +524,10 @@
     });
   }
 
+  /**===========================
+   * Rendering cards
+   ============================*/
+
   function render() {
     unsortedEl.innerHTML = state.unsorted.length
       ? state.unsorted.map(id => cardHTML(getChar(id))).join('')
@@ -454,6 +557,8 @@
       </div>
     `).join('');
 
+    deleteActionCharacters();
+
     renderCounts();
     initSortable();
 
@@ -469,6 +574,10 @@
     render();
     saveState();
   }
+
+  /**===========================
+   * Command Generation
+   ============================*/
 
   function finalIds() {
     return state.buckets.flatMap(b => b.chars);
@@ -525,6 +634,10 @@
     el('commandOutput').value = commands.join('\n');
   }
 
+  /**===========================
+   * Event listeners
+   ============================*/
+
   el('parseBtn').addEventListener('click', () => addParsed(sourceText.value));
 
   el('addBucket').addEventListener('click', () => makeBucket(`Bucket ${state.buckets.length + 1}`));
@@ -536,6 +649,14 @@
     render();
     saveState();
   });
+
+  deleteButton.addEventListener('click', () => {
+    if (!confirm('Are you sure you want to delete all selected characters?')) return;
+    document.querySelectorAll('.card-selected').forEach(card => {
+      deleteCharacters(selectedCharacterIds(document));
+    });
+
+  })
 
   bucketsEl.addEventListener('change', e => {
     if (e.target.matches('[data-bucket-name]')) {

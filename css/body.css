@@ -67,6 +67,15 @@ header {
 	margin-bottom: 1rem;
 }
 
+.toolbar-centered {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+}
+
 .output-grid {
 	display: grid;
 	grid-template-columns: 1fr auto;
