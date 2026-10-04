@@ -54,6 +54,10 @@
 
     const defaultEmbedColor = '670d08';
 
+    function getChar(id) {
+        return state.characters.get(id);
+    }
+
     /**===========================
      * State manager
      ============================*/
@@ -169,6 +173,7 @@
 
         for (const c of parsed) {
             if (existingId = getIdByName(c.name)) {
+                c.id = existingId;
                 duplicates++;
                 state.characters.set(existingId, c);
                 continue;
@@ -328,10 +333,6 @@
 
         if (batch.length) commands.push(format(batch));
         return commands;
-    }
-
-    function getChar(id) {
-        return state.characters.get(id);
     }
 
     /**===========================
